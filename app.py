@@ -2,8 +2,7 @@ import streamlit as st
 import pandas as pd 
 import numpy as np
 import pickle
-from sklearn import datasets
-from sklearn import preprocessing
+from sklearn import *
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from sklearn.linear_model import LogisticRegression
@@ -23,10 +22,12 @@ st.title("""Edo Hanifauzan Satria""")
 st.title("""200411100058""")
 st.header("""Penambangan Data 	""")
 
-#st.subheader('User Input Features')
+model = pickle.load(open('modelNBC_Raisin.pkl', 'rb'))
 df=pd.read_csv('https://raw.githubusercontent.com/EdoHanifauzan/data/Dataset/Raisin_Dataset.csv')
 min_max_scaler = preprocessing.MinMaxScaler(feature_range=(0,1))
-normalized = min_max_scaler.fit_transform(x)
+y=df["Class"]
+X=df.drop(columns =["Class"])
+normalized = min_max_scaler.fit_transform(X)
 n=pd.DataFrame(normalized,columns=['Area','MajorAxisLength','MinorAxisLength','Eccentricity','ConvexArea','Extent','Perimeter'])
 
 
@@ -83,41 +84,30 @@ with page2:
 	st.write(df)
 	st.subheader("Data proccesing")
 	st.write(n)
-	st.write('Jumlah Baris dan Kolom :',d.shape)
+	st.write('Jumlah Baris dan Kolom :',X.shape)
 	st.write('Jumlah kelas :',len(np.unique(y)))
 	X_train, X_test, y_train, y_test=train_test_split(normalized, y, test_size= 0.20, random_state=4321)
-	algo=KNeighborsClassifier(n_neighbors=8)
-	algo.fit(X_train,y_train)
-	y_pred=algo.predict(X_test)
+	alg=KNeighborsClassifier(n_neighbors=8)
+	alg.fit(X_train,y_train)
+	y_pred=alg.predict(X_test)
 	acc=accuracy_score(y_test, y_pred)
 	st.write(f'Akurasi  =', acc)
 
 with page3:
     st.header("Input Data Model")
 
-    def pilih_klasifikasi(nama_algoritma):
-    algo=None
-    if nama_algoritma=='KNN':
-    	algo=KNeighborsClassifier(n_neighbors=8)
-    elif nama_algoritma=='GaussianNB':
-    	algo=GaussianNB()
-    elif nama_algoritma =='K-Means':
-    	algo=KMeans(n_clusters=5)
-    elif nama_algoritma =='Decision Tree':
-    	algo= DecisionTreeClassifier(criterion="gini")
-    elif nama_algoritma =='Random Forest':
-    	algo=RandomForestClassifier(n_estimators=100, random_state=4321)
-    return algo
+    
     # membuat input
     def user_input_features():
         Area = st.slider('Area',40000,90000,63000)
         MajorAxisLength = st.slider('Major Axis Length',220.1,500.0,403.9)
         MinorAxisLength = st.slider('Minor Axis Length',150.1,300.9,189.9)
         Eksentrisitas = st.slider('Eksentrisitas',0.10,0.99,0.56)
-        ConvexArea = st.slider('Convex Area',4000.1,9999,4350)
+        ConvexArea = st.slider('Convex Area',4000,9999,4350)
         Extent = st.slider('Extent',0.100,0.999,0.39)
-        Perimeter = st.slider('Perimeter',800.0,130.9,843.9)
-        data={'Major Axis Length' : MajorAxisLength,
+        Perimeter = st.slider('Perimeter',800.0,1300.9,843.9)
+        data={'Area':Area,
+            'Major Axis Length' : MajorAxisLength,
             'Minor Axis Length' : MinorAxisLength,
             'Eksentrisitas' : Eksentrisitas,
             'Convex Area' : ConvexArea,
@@ -127,20 +117,21 @@ with page3:
         features = pd.DataFrame(data, index=[0])
         return features
         
-    input_df = user_input_features()
-    algoritma=st.selectbox('pilih algoritma',("GaussianNB","KNN","K-Means","Decision Tree","Random Forest"))
-    alg=pilih_klasifikasi(algoritma)
-    y=df["Class"]
-    data = pd.concat([input_df,penguins],axis=0)
+    data = user_input_features()
+    algoritma=st.selectbox('pilih algoritma',("GaussianNB","KNN","K-Means","Decision Tree"))
+    if algoritma=='KNN':
+        algo=KNeighborsClassifier(n_neighbors=8)
+    elif algoritma=='GaussianNB':
+        algo=GaussianNB()
+    elif algoritma =='K-Means':
+        algo=KMeans(n_clusters=5)
+    elif algoritma =='Decision Tree':
+        algo= DecisionTreeClassifier(criterion="gini")
 
     st.subheader("Hasil :")
     st.write(data)
-
-    prediction = alg.predict(data)
-    prediction_proba = alg.predict_proba(data)
+    algo.fit(X,y)
+    prediction = model.predict(data)
 
     st.subheader('Prediksi')
-    st.write(y[prediction])
-
-    st.subheader('Probabilitas Prediksi')
-    st.write(prediction_proba)
+    st.write(data[prediction])
