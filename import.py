@@ -16,10 +16,11 @@ X = df.drop('Class', axis=1)
 Y = df['Class']
 
 # Build random forest model
-from sklearn.ensemble import RandomForestClassifier
-clf = RandomForestClassifier()
-clf.fit(X, Y)
+
+from sklearn.naive_bayes import GaussianNB
+model = GaussianNB()
+model.fit(X, Y)
 
 # Saving the model
 import pickle
-pickle.dump(clf, open('raisin_cls.pkl', 'wb'))
+pickle.dump(model, open('modelNBC_Raisin.pkl', 'wb'))
